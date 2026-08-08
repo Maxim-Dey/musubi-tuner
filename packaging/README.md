@@ -70,61 +70,94 @@ bash packaging/verify.sh
 Версии задаются аргументами сборки `TORCH_VERSION`, `TORCHVISION_VERSION`,
 `TORCH_INDEX` в `Dockerfile`.
 
-## Доставка на сервер
+## Шаг 1. Заливка на Hugging Face
 
-Архив публикуется в публичный dataset-репозиторий на Hugging Face, откуда
-сервер забирает его через корпоративное зеркало.
+Репозиторий `motionmaksim/environment`, тип - model (обычный, без
+`--repo-type`): именно такой путь понимает зеркало Artifactory.
 
-```bash
-pip install -U "huggingface_hub[cli,hf_transfer]"
-hf auth login
-HF_HUB_ENABLE_HF_TRANSFER=1 hf upload <user>/musubi-tuner-env \
-    ../out_build/musubi-tuner-cu124.tar.gz --repo-type dataset
-hf upload <user>/musubi-tuner-env \
-    ../out_build/musubi-tuner-cu124.sha256 --repo-type dataset
+В PowerShell из папки `out_build`:
+
+```powershell
+cd ..\out_build
+$env:HF_HUB_DISABLE_XET = "1"
+hf upload motionmaksim/environment musubi-tuner-cu124.tar.gz
+hf upload motionmaksim/environment musubi-tuner-cu124.sha256
 ```
 
-На сервере, без установки каких-либо пакетов:
+`HF_HUB_DISABLE_XET=1` обязателен. Без него включается Xet-бэкенд, который
+льёт файл в много параллельных соединений и намертво встаёт на середине -
+прогресс-бар стоит, ошибки нет. Переменная действует только в текущем окне
+PowerShell, при новом окне её нужно задать снова.
+
+Заливка идёт из папки с архивом, поэтому имя файла указывается без пути -
+под этим же именем файл появится в репозитории.
+
+Если всё же встанет, прервать по `Ctrl+C` и запустить ту же команду снова:
+уже загруженные части повторно не отправляются.
+
+## Шаг 2. Скачивание на сервер
+
+Зеркало Artifactory проксирует Hugging Face, токен не нужен.
 
 ```bash
 cd /workspace
-curl -L -C - -O "$HF_MIRROR/datasets/<user>/musubi-tuner-env/resolve/main/musubi-tuner-cu124.tar.gz"
-curl -L -O "$HF_MIRROR/datasets/<user>/musubi-tuner-env/resolve/main/musubi-tuner-cu124.sha256"
+BASE=https://binary.alfabank.ru/artifactory/api/huggingfaceml/huggingface/motionmaksim/environment/resolve/main
+curl -L -C - -O "$BASE/musubi-tuner-cu124.tar.gz"
+curl -L -O "$BASE/musubi-tuner-cu124.sha256"
+```
+
+`-C -` продолжает закачку с места обрыва, поэтому при разрыве достаточно
+повторить ту же команду. `-O` сохраняет файл под именем из URL.
+
+## Шаг 3. Проверка и распаковка
+
+```bash
+cd /workspace
 sha256sum -c musubi-tuner-cu124.sha256
 tar -xzf musubi-tuner-cu124.tar.gz
 ```
 
-`-C -` включает докачку с места обрыва.
+`sha256sum -c` должен ответить `musubi-tuner-cu124.tar.gz: OK`. Любой другой
+ответ означает битую закачку - удалить архив и скачать заново. Распаковывать
+до этой проверки бессмысленно.
 
-## Проверка после распаковки
+Распаковка создаёт `/workspace/musubi-tuner`. Путь менять нельзя: окружение
+собрано под него, при переносе в другое место сломаются пути внутри `.venv`.
+
+## Шаг 4. Проверка окружения
 
 ```bash
 cd /workspace/musubi-tuner
 .venv/bin/python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.device_count(), torch.cuda.get_device_name(0))"
-.venv/bin/python src/musubi_tuner/qwen_image_train.py --help
 ```
 
-Ожидаемый вывод первой команды: `2.6.0+cu124 True 2 NVIDIA H200`.
+Ожидаемый вывод: `2.6.0+cu124 True 2 NVIDIA H200`.
 
 Если `torch.cuda.is_available()` вернёт `False` при живом `nvidia-smi`, значит
 сборка torch несовместима с драйвером - пересобрать с `TORCH_INDEX` на `cu121`
 и `TORCH_VERSION=2.5.1`.
 
-## Запуск
+## Шаг 5. Запуск
 
-Только через `.venv/bin/python`, без `activate` - чтобы не зависеть от того,
-какое окружение активно в Jupyter:
+Активировать окружение не нужно. Достаточно вызывать интерпретатор из архива
+по полному пути - тогда результат не зависит от того, какое окружение активно
+в Jupyter:
 
 ```bash
 cd /workspace/musubi-tuner
 .venv/bin/python src/musubi_tuner/qwen_image_train.py --config_file 1_confyg_qwen_full_finetune/config.toml
 ```
 
-Отдельное ядро для Jupyter, если нужно:
+Если привычнее классический способ, `source .venv/bin/activate` тоже работает,
+но тогда за актуальность `PATH` отвечаешь сам.
+
+Отдельное ядро для Jupyter, если нужно запускать из ноутбуков:
 
 ```bash
 .venv/bin/python -m ipykernel install --user --name musubi-tuner
 ```
+
+После этого ядро `musubi-tuner` появится в списке в Jupyter Lab.
 
 ## Замена opencv-python на headless
 
