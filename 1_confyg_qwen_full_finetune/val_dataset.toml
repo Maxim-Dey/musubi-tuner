@@ -1,0 +1,13 @@
+# DATASET FOR VALIDATION
+
+[general]
+resolution = [1024, 1024]
+caption_extension = ".txt"
+batch_size = 1
+enable_bucket = true
+bucket_no_upscale = false
+
+[[datasets]]
+image_directory = "/workspace/musubi-tuner/!_datasets/a1fa_b2c3d_grad1ent/image/val"
+cache_directory = "/workspace/musubi-tuner/!_datasets/a1fa_b2c3d_grad1ent/cache/val"
+num_repeats = 1

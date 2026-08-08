@@ -1,0 +1,65 @@
+# ПОЛНЫЙ ФАЙНТЮН QWEN IMAGE 2512 20B
+# === Модели ===
+dit = "/workspace/musubi-tuner/models/qwen_image_2512_bf16.safetensors"              # DiT (трансформер), который обучаем
+vae = "/workspace/musubi-tuner/models/qwen_image_vae.safetensors"                    # VAE (кодирует/декодирует картинки в латенты)
+text_encoder = "/workspace/musubi-tuner/models/qwen_2.5_vl_7b.safetensors"  # Qwen2.5-VL, кодирует подписи
+model_version = "original"                                                               # версия архитектуры: original = базовая Qwen-Image (text-to-image)
+
+# === Датасеты ===
+dataset_config = "dataset.toml"                 # обучающий датасет
+validation_dataset_config = "val_dataset.toml"  # валидационный датасет (отложенный, для loss/validation)
+validation_every_n_steps = 10                   # считать validation loss каждые N шагов
+validation_seed = 1000                          # фиксированный seed валидации, чтобы кривые были сравнимы между шагами
+
+# === Точность и attention ===
+sdpa = true                    # бэкенд внимания: встроенный PyTorch SDPA (просто и совместимо)
+mixed_precision = "bf16"       # смешанная точность bf16 (рекомендуется для Qwen-Image)
+full_bf16 = true               # веса в bf16 (обязательно для 20B: иначе fp32-веса+градиенты не влезают в 141 ГБ)
+gradient_checkpointing = true  # экономия VRAM ценой небольшого замедления (пересчёт активаций)
+
+# === Сэмплирование timestep (flow matching) ===
+# По умолчанию sigma + shift 1.0 -> рассогласование с инференсом Qwen-Image (он использует shift ~2.2 для 1024).
+timestep_sampling = "shift"    # метод сэмплирования шагов; shift = сдвинутое распределение (как рекомендуют доки)
+discrete_flow_shift = 2.2      # величина сдвига; для Qwen-Image ~2.2 (согласовано с инференсом)
+weighting_scheme = "none"      # без доп. взвешивания лосса по timestep (как в примере обучения Qwen-Image)
+
+# === Оптимизатор и learning rate ===
+optimizer_type = "adafactor"          # Adafactor: маленькое состояние, для полного файнтюна 20B обязателен
+optimizer_args = ["relative_step=False", "scale_parameter=False", "warmup_init=False"]  # внешний LR + scheduler
+fused_backward_pass = true            # шаг оптимизатора прямо в backward по каждому параметру -> убирает OOM
+learning_rate = 1e-5                  # скорость обучения
+max_grad_norm = 0                     # с fused_backward_pass клиппинг идёт по-параметрно (не глобально), но гасит выбросы
+lr_scheduler = "constant_with_warmup" # плавный разгон LR, затем постоянное значение
+lr_warmup_steps = 100                 # число шагов разогрева LR
+
+# === Загрузчик данных ===
+max_data_loader_n_workers = 2          # число воркеров чтения данных
+persistent_data_loader_workers = true  # не убивать воркеров между эпохами (убирает паузу)
+
+# === Накопление градиентов ===
+gradient_accumulation_steps = 1  # держать 1: при fused_backward_pass оптимизатор шагает каждый micro-batch, накопление не работает
+
+# === DDP (мультиGPU) ===
+ddp_static_graph = true              # фиксирует граф: позволяет DDP работать с неиспользуемыми параметрами
+ddp_gradient_as_bucket_view = true   # экономия памяти на буферах градиентов DDP
+
+# === Длительность и сохранения ===
+max_train_steps = 5000         # сколько всего шагов обучать
+save_every_n_steps = 100         # сохранять чекпоинт каждые N шагов
+save_last_n_steps = 1000         # хранить чекпоинты только за последние N шагов (старые удаляются)
+save_state = false               # НЕ сохранять состояние оптимизатора (экономия диска; продолжение через --dit с разогревом)
+seed = 1000                      # seed обучения (воспроизводимость)
+
+# === Вывод ===
+output_dir = "/workspace/musubi-tuner/!_qwen_full_finetune/output"  # куда сохранять чекпоинты
+output_name = "qwen2512-ft"                                         # базовое имя файлов модели
+
+# === Логи (TensorBoard) ===
+logging_dir = "/workspace/musubi-tuner/!_qwen_full_finetune/logs"  # папка логов
+log_with = "tensorboard"                                           # бэкенд логирования
+log_prefix = "qwen2512-ft"                                         # префикс имени запуска
+
+# === Сэмплы во время обучения ===
+sample_prompts = "/workspace/musubi-tuner/!_qwen_full_finetune/sample_prompts.txt"  # промпты для генерации сэмплов
+sample_every_n_steps = 100                                                          # генерировать сэмплы каждые N шагов
+sample_at_first = true                                                              # сгенерировать сэмплы на шаге 0 (базовая точка до обучения)
