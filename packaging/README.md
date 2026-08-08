@@ -89,7 +89,6 @@ bash packaging/verify.sh
 cd ..\out_build
 $env:HF_HUB_DISABLE_XET = "1"
 hf upload motionmaksim/environment musubi-tuner-cu124.tar.gz
-hf upload motionmaksim/environment musubi-tuner-cu124.sha256
 ```
 
 `HF_HUB_DISABLE_XET=1` обязателен. Без него включается Xet-бэкенд, который
@@ -111,23 +110,29 @@ PowerShell, при новом окне её нужно задать снова.
 cd /workspace
 BASE=https://binary.alfabank.ru/artifactory/api/huggingfaceml/huggingface/motionmaksim/environment/resolve/main
 curl -L -C - -O "$BASE/musubi-tuner-cu124.tar.gz"
-curl -L -O "$BASE/musubi-tuner-cu124.sha256"
 ```
 
 `-C -` продолжает закачку с места обрыва, поэтому при разрыве достаточно
 повторить ту же команду. `-O` сохраняет файл под именем из URL.
 
+Файл `.sha256` через зеркало тянуть бесполезно: маленькие файлы Artifactory
+отдаёт не содержимым, а служебным указателем, и `sha256sum -c` на нём падает
+с `no properly formatted checksum lines found`.
+
 ## Шаг 3. Проверка и распаковка
+
+Сверяем размер и хеш с тем, что напечатал `pack.sh` в конце сборки:
 
 ```bash
 cd /workspace
-sha256sum -c musubi-tuner-cu124.sha256
+ls -l musubi-tuner-cu124.tar.gz
+sha256sum musubi-tuner-cu124.tar.gz
 tar -xzf musubi-tuner-cu124.tar.gz
 ```
 
-`sha256sum -c` должен ответить `musubi-tuner-cu124.tar.gz: OK`. Любой другой
-ответ означает битую закачку - удалить архив и скачать заново. Распаковывать
-до этой проверки бессмысленно.
+Размер в байтах должен совпасть точно - это уже отсекает оборванную закачку.
+Хеш считается несколько минут и даёт полную гарантию. Если не совпало -
+удалить архив и скачать заново, распаковывать бессмысленно.
 
 Распаковка создаёт `/workspace/musubi-tuner`. Путь менять нельзя: окружение
 собрано под него, при переносе в другое место сломаются пути внутри `.venv`.
