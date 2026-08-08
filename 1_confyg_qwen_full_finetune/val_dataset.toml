@@ -8,6 +8,6 @@ enable_bucket = true
 bucket_no_upscale = false
 
 [[datasets]]
-image_directory = "/workspace/musubi-tuner/2_datasets/a1fa_b2c3d_grad1ent/val"
+image_directory = "/workspace/musubi-tuner/2_datasets/a1fa_b2c3d_grad1ent/image/val"
 cache_directory = "/workspace/musubi-tuner/2_datasets/a1fa_b2c3d_grad1ent/cache/val"
 num_repeats = 1
