@@ -1,8 +1,8 @@
-# Упаковка musubi-tuner для закрытого контура
+# musubi-tuner: упаковка, доставка и запуск в закрытом контуре
 
-Собирает автономный архив с Python-окружением и всеми зависимостями. На целевом
-сервере нет ни интернета, ни Docker, поэтому архив распаковывается и работает
-как есть.
+Полный путь от сборки на рабочей машине до обучения на сервере DES. Собирается
+автономный архив с Python-окружением и всеми зависимостями: на целевом сервере
+нет ни интернета, ни Docker, поэтому архив распаковывается и работает как есть.
 
 ## Целевой сервер
 
@@ -16,9 +16,9 @@
 CUDA Toolkit на сервере не нужен: колёса torch несут свой CUDA runtime внутри,
 требуется только драйвер.
 
-## Как это работает
+## Как устроена переносимость
 
-Два решения, на которых держится переносимость:
+Два решения, на которых всё держится:
 
 1. Окружение собирается внутри контейнера **по тому же абсолютному пути**,
    по которому будет лежать на сервере. Поэтому shebang'и в `.venv/bin/*`,
@@ -30,7 +30,7 @@ CUDA Toolkit на сервере не нужен: колёса torch несут 
 Архив создаётся `tar` внутри контейнера, а не на хосте: файловая система Windows
 не умеет представлять симлинки и биты прав, которые есть в venv.
 
-## Сборка
+## Шаг 1. Сборка
 
 Запускается из PowerShell, из корня репозитория инструмента:
 
@@ -49,7 +49,14 @@ WSL-интеграцию. Ничего доустанавливать не ну�
 `PACK_NAME` - префикс `PACK_` нужен потому, что `NAME` и `IMAGE` уже заняты
 в окружении WSL.
 
-Проверка собранного архива, оттуда же:
+Требования к сборочной машине: Docker и прямой доступ к `pypi.org`,
+`download.pytorch.org`, `ghcr.io`, `public.ecr.aws`. Docker Hub не нужен -
+базовый образ берётся из зеркала AWS ECR, так как Hub блокирует часть регионов.
+
+Сборка занимает около 15 минут, архив выходит примерно 3.4 ГБ. В Docker Desktop
+стоит заранее поднять лимит дискового образа WSL2.
+
+## Шаг 2. Проверка архива
 
 ```powershell
 bash packaging/verify.sh
@@ -60,30 +67,10 @@ bash packaging/verify.sh
 библиотек, которых на сервере может не быть. `cuda_available` там всегда
 `False` - у контейнера нет GPU, это ожидаемо.
 
-Требования к сборочной машине: Docker и прямой доступ к `pypi.org`,
-`download.pytorch.org`, `ghcr.io`, `public.ecr.aws`. Docker Hub не нужен -
-базовый образ берётся из зеркала AWS ECR, так как Hub блокирует часть регионов.
-
-Ожидаемый размер архива - 6-9 ГБ. В Docker Desktop стоит заранее поднять лимит
-дискового образа WSL2.
-
-## Выбор версии CUDA
-
-`cu124` выбран под драйвер 535. Благодаря CUDA minor version compatibility
-колёса любого тулкита 12.x работают на драйвере от 525.60.13, и для `cu124` это
-штатный сценарий. `cu128` тянет заметно более свежие cuDNN и NCCL, которые уже
-упирались в старые драйверы, а выигрыша на `sm_90` не даёт. `cu130` требует
-драйвер 580+ и неприменим.
-
-Версии задаются аргументами сборки `TORCH_VERSION`, `TORCHVISION_VERSION`,
-`TORCH_INDEX` в `Dockerfile`.
-
-## Шаг 1. Заливка на Hugging Face
+## Шаг 3. Заливка на Hugging Face
 
 Репозиторий `motionmaksim/environment`, тип - model (обычный, без
 `--repo-type`): именно такой путь понимает зеркало Artifactory.
-
-В PowerShell из папки `out_build`:
 
 ```powershell
 cd ..\out_build
@@ -102,7 +89,7 @@ PowerShell, при новом окне её нужно задать снова.
 Если всё же встанет, прервать по `Ctrl+C` и запустить ту же команду снова:
 уже загруженные части повторно не отправляются.
 
-## Шаг 2. Скачивание на сервер
+## Шаг 4. Скачивание на сервер
 
 Зеркало Artifactory проксирует Hugging Face, токен не нужен.
 
@@ -119,7 +106,7 @@ curl -L -C - -O "$BASE/musubi-tuner-cu124.tar.gz"
 отдаёт не содержимым, а служебным указателем, и `sha256sum -c` на нём падает
 с `no properly formatted checksum lines found`.
 
-## Шаг 3. Проверка и распаковка
+## Шаг 5. Проверка и распаковка
 
 Сверяем размер и хеш с тем, что напечатал `pack.sh` в конце сборки:
 
@@ -137,7 +124,7 @@ tar -xzf musubi-tuner-cu124.tar.gz
 Распаковка создаёт `/workspace/musubi-tuner`. Путь менять нельзя: окружение
 собрано под него, при переносе в другое место сломаются пути внутри `.venv`.
 
-## Шаг 4. Проверка окружения
+## Шаг 6. Проверка окружения
 
 ```bash
 cd /workspace/musubi-tuner
@@ -150,19 +137,10 @@ cd /workspace/musubi-tuner
 сборка torch несовместима с драйвером - пересобрать с `TORCH_INDEX` на `cu121`
 и `TORCH_VERSION=2.5.1`.
 
-## Шаг 5. Запуск
-
-Активировать окружение не нужно. Достаточно вызывать интерпретатор из архива
-по полному пути - тогда результат не зависит от того, какое окружение активно
-в Jupyter:
-
-```bash
-cd /workspace/musubi-tuner
-.venv/bin/python src/musubi_tuner/qwen_image_train.py --config_file 1_confyg_qwen_full_finetune/config.toml
-```
-
-Если привычнее классический способ, `source .venv/bin/activate` тоже работает,
-но тогда за актуальность `PATH` отвечаешь сам.
+Активировать окружение не нужно нигде: интерпретатор вызывается по полному
+пути `/workspace/musubi-tuner/.venv/bin/python`, поэтому результат не зависит
+от того, какое окружение активно в Jupyter. `source .venv/bin/activate` тоже
+работает, но ничего не упрощает.
 
 Отдельное ядро для Jupyter, если нужно запускать из ноутбуков:
 
@@ -170,16 +148,158 @@ cd /workspace/musubi-tuner
 .venv/bin/python -m ipykernel install --user --name musubi-tuner
 ```
 
-После этого ядро `musubi-tuner` появится в списке в Jupyter Lab.
+## Шаг 7. Обучение
 
-## Замена opencv-python на headless
+Полный файнтюн Qwen-Image 2512 20B. Одна команда на весь пайплайн: кеш
+латентов -> кеш Text Encoder -> обучение. Всё пишется в один лог-файл,
+обучение - в один event-файл TensorBoard.
+
+Что должно быть на месте до запуска:
+
+- Модели по путям из `config.toml` (`dit`, `vae`, `text_encoder`) -
+  в архив они не входят и качаются на сервер отдельно.
+- Картинки с подписями по путям `image_directory` из `dataset.toml`
+  и `val_dataset.toml`. Папки `cache_directory` создавать не нужно, скрипты
+  кеширования создают их сами.
+
+```bash
+mkdir -p /workspace/logs
+LOG="/workspace/logs/qwen_train_$(date +%Y%m%d_%H%M%S).log"
+
+VENV="/workspace/musubi-tuner/.venv/bin"
+CFG="/workspace/musubi-tuner/1_confyg_qwen_full_finetune"   # папка с конфигами
+GPUS="0"                                                   # "0", "1" или "0,1"
+
+{
+  echo "=== START $(date -Is) ===";
+  echo "LOG=$LOG";
+
+  cd /workspace/musubi-tuner || exit 1;
+
+  export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True;
+  export CUDA_VISIBLE_DEVICES="$GPUS";
+  NPROC=$(echo "$GPUS" | tr ',' '\n' | wc -l);
+  echo "CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES NPROC=$NPROC";
+
+  VAE=$("$VENV/python" -c 'import sys, toml; print(toml.load(sys.argv[1])["vae"])' "$CFG/config.toml") || exit 1;
+  TE=$("$VENV/python" -c 'import sys, toml; print(toml.load(sys.argv[1])["text_encoder"])' "$CFG/config.toml") || exit 1;
+  echo "VAE=$VAE";
+  echo "TEXT_ENCODER=$TE";
+
+  echo "=== CACHE LATENTS (train + val) ===";
+  for DS in dataset val_dataset; do
+    stdbuf -oL -eL "$VENV/python" src/musubi_tuner/qwen_image_cache_latents.py \
+      --dataset_config "$CFG/$DS.toml" \
+      --vae "$VAE" \
+      --model_version original \
+      --batch_size 8 \
+      --skip_existing || exit $?;
+  done;
+
+  echo "=== CACHE TEXT ENCODER (train + val) ===";
+  for DS in dataset val_dataset; do
+    stdbuf -oL -eL "$VENV/python" src/musubi_tuner/qwen_image_cache_text_encoder_outputs.py \
+      --dataset_config "$CFG/$DS.toml" \
+      --text_encoder "$TE" \
+      --model_version original \
+      --batch_size 8 \
+      --skip_existing || exit $?;
+  done;
+
+  echo "=== TRAINING ===";
+  if [ "$NPROC" -gt 1 ]; then MULTI="--multi_gpu"; else MULTI=""; fi;
+
+  stdbuf -oL -eL "$VENV/accelerate" launch $MULTI --num_processes "$NPROC" --mixed_precision bf16 \
+    --num_cpu_threads_per_process 1 \
+    src/musubi_tuner/qwen_image_train.py \
+      --config_file "$CFG/config.toml" \
+      --dataset_config "$CFG/dataset.toml" \
+      --validation_dataset_config "$CFG/val_dataset.toml" \
+      --sample_prompts "$CFG/sample_prompts.txt";
+
+  EXIT=$?;
+  echo "=== END $(date -Is) exit=$EXIT ===";
+  exit $EXIT;
+} 2>&1 | tee -a "$LOG"
+```
+
+### Выбор видеокарты
+
+Меняется одна строка `GPUS`, количество процессов и флаг `--multi_gpu`
+подставляются сами:
+
+| `GPUS`  | что запустится                           |
+| ------- | ---------------------------------------- |
+| `"0"`   | одна GPU 0, `--num_processes 1`          |
+| `"1"`   | одна GPU 1, `--num_processes 1`          |
+| `"0,1"` | обе GPU, `--multi_gpu --num_processes 2` |
+
+Кеширование всегда однопроцессное и идёт на первой GPU из списка.
+
+### Повторные запуски
+
+Кеширование вызывается с `--skip_existing`: файлы, для которых кеш уже есть,
+повторно не считаются, поэтому команду можно перезапускать как есть. Кеши,
+которых больше нет в датасете, удаляются автоматически (добавьте
+`--keep_cache`, если это не нужно). Полный пересчёт - удалить папки
+`cache_directory` из `dataset.toml` / `val_dataset.toml`.
+
+### Зачем пути к датасетам дублируются в команде
+
+В `config.toml` ключи `dataset_config`, `validation_dataset_config` заданы
+относительными путями, а разрешаются они относительно текущей директории
+(`/workspace/musubi-tuner`), а не относительно самого конфига. Явная передача
+`--dataset_config`, `--validation_dataset_config` и `--sample_prompts` из `$CFG`
+перекрывает значения конфига и убирает эту неоднозначность.
+
+### Куда смотреть
+
+- Лог запуска: `/workspace/logs/qwen_train_<дата>_<время>.log`
+- Чекпоинты: `output_dir` из `config.toml`
+- Сэмплы и кривые TensorBoard: `logging_dir` из `config.toml`
+
+```bash
+/workspace/musubi-tuner/.venv/bin/tensorboard \
+    --logdir "/workspace/musubi-tuner/1_confyg_qwen_full_finetune/logs" \
+    --host 0.0.0.0 --port 6006
+```
+
+Кривые: `loss/current`, `loss/average`, `loss/epoch`, `lr/unet` и
+`loss/validation/<домен>` - по одной на каждый блок `[[datasets]]`
+из `val_dataset.toml`.
+
+### Если обучение падает сразу
+
+`ValueError: No training items found in the dataset` означает, что датасет
+пуст с точки зрения загрузчика. Почти всегда причина - `image_directory`
+в `dataset.toml` или `val_dataset.toml` указывает на несуществующий путь:
+ошибки об отсутствующей папке не будет, просто найдётся ноль картинок.
+
+```bash
+ls "$(grep image_directory "$CFG/dataset.toml" | cut -d'"' -f2)" | head
+```
+
+## Справка
+
+### Выбор версии CUDA
+
+`cu124` выбран под драйвер 535. Благодаря CUDA minor version compatibility
+колёса любого тулкита 12.x работают на драйвере от 525.60.13, и для `cu124` это
+штатный сценарий. `cu128` тянет заметно более свежие cuDNN и NCCL, которые уже
+упирались в старые драйверы, а выигрыша на `sm_90` не даёт. `cu130` требует
+драйвер 580+ и неприменим.
+
+Версии задаются аргументами сборки `TORCH_VERSION`, `TORCHVISION_VERSION`,
+`TORCH_INDEX` в `Dockerfile`.
+
+### Замена opencv-python на headless
 
 `opencv-python` подгружает системные `libGL.so.1` и `libglib2.0`, наличие
 которых на сервере не гарантировано. GUI-функции OpenCV в обучающих скриптах
 не используются, поэтому после установки зависимостей пакет заменяется на
 `opencv-python-headless` той же версии. Импорт `cv2` и API остаются прежними.
 
-## Что не входит в сборку
+### Что не входит в сборку
 
 `sageattention` и `flash-attn` требуют компиляции под конкретную архитектуру GPU
 и в базовую сборку не включены. При необходимости добавляются отдельным слоем
