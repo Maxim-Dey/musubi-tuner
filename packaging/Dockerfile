@@ -41,7 +41,11 @@ ENV VIRTUAL_ENV=${PREFIX}/.venv
 RUN uv pip install --index-url ${TORCH_INDEX} \
         "torch==${TORCH_VERSION}" "torchvision==${TORCHVISION_VERSION}"
 
-RUN uv pip install -e . ipykernel
+# Ставим и dev-группу целиком: она выглядит как инструменты разработки, но
+# tensorboard в ней нужен в рантайме - без него accelerate молча выкидывает
+# трекер, и логи обучения никуда не пишутся. Выбирать пакеты поштучно значит
+# однажды снова угадать неверно.
+RUN uv pip install -e . --group dev ipykernel
 
 # opencv-python тянет из системы libGL и libglib, которых на сервере может
 # не оказаться. GUI-функции OpenCV здесь не используются, headless-сборка

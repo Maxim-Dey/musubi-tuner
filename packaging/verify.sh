@@ -28,14 +28,17 @@ PY=/workspace/musubi-tuner/.venv/bin/python
 "$PY" - <<'PY'
 import sys
 import cv2
+import tensorboard
 import torch
 import transformers
 import musubi_tuner
+from torch.utils.tensorboard import SummaryWriter
 
 print("python", sys.version.split()[0])
 print("torch", torch.__version__)
 print("transformers", transformers.__version__)
 print("opencv", cv2.__version__)
+print("tensorboard", tensorboard.__version__)
 print("cuda_available", torch.cuda.is_available())
 PY
 
