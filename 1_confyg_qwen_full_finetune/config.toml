@@ -51,15 +51,15 @@ save_state = false               # НЕ сохранять состояние о
 seed = 1000                      # seed обучения (воспроизводимость)
 
 # === Вывод ===
-output_dir = "/workspace/musubi-tuner/!_qwen_full_finetune/output"  # куда сохранять чекпоинты
+output_dir = "/workspace/musubi-tuner/1_confyg_qwen_full_finetune/output"  # куда сохранять чекпоинты
 output_name = "qwen2512-ft"                                         # базовое имя файлов модели
 
 # === Логи (TensorBoard) ===
-logging_dir = "/workspace/musubi-tuner/!_qwen_full_finetune/logs"  # папка логов
+logging_dir = "/workspace/musubi-tuner/1_confyg_qwen_full_finetune/logs"  # папка логов
 log_with = "tensorboard"                                           # бэкенд логирования
 log_prefix = "qwen2512-ft"                                         # префикс имени запуска
 
 # === Сэмплы во время обучения ===
-sample_prompts = "/workspace/musubi-tuner/!_qwen_full_finetune/sample_prompts.txt"  # промпты для генерации сэмплов
+sample_prompts = "/workspace/musubi-tuner/1_confyg_qwen_full_finetune/sample_prompts.txt"  # промпты для генерации сэмплов
 sample_every_n_steps = 100                                                          # генерировать сэмплы каждые N шагов
 sample_at_first = true                                                              # сгенерировать сэмплы на шаге 0 (базовая точка до обучения)

@@ -141,6 +141,86 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
 
     # endregion model specific
 
+    # region validation
+
+    @staticmethod
+    def _unpack_dit_output(output):
+        if isinstance(output, tuple):
+            return output[0], output[1]
+        return output.pred, output.target
+
+    def get_validation_domain_name(self, dataset):
+        generic_leaves = {"val", "validation", "train", "data", "image", "images"}
+        for attr in ("image_directory", "image_jsonl_file", "video_directory", "cache_directory"):
+            value = getattr(dataset, attr, None)
+            if value:
+                path = os.path.normpath(value)
+                name = os.path.splitext(os.path.basename(path))[0]
+                if name.lower() in generic_leaves:
+                    parent = os.path.basename(os.path.dirname(path))
+                    if parent:
+                        name = parent
+                return name
+        return "val"
+
+    def validate(self, accelerator, args, transformer, val_dataloaders, noise_scheduler, dit_dtype, global_step):
+        if not val_dataloaders:
+            return
+
+        accelerator.wait_for_everyone()
+        transformer.eval()
+
+        rng_state = torch.get_rng_state()
+        cuda_rng_state = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+
+        logs = {}
+
+        for domain_name, val_dataloader in val_dataloaders:
+            # reset seed per domain: noise/timesteps are reproducible across steps and independent across domains
+            torch.manual_seed(args.validation_seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(args.validation_seed)
+
+            domain_loss = torch.zeros((), device=accelerator.device)
+            domain_count = torch.zeros((), device=accelerator.device)
+            with torch.no_grad():
+                for batch in val_dataloader:
+                    latents = self.scale_shift_latents(batch["latents"])
+                    noise = torch.randn_like(latents)
+                    noisy_model_input, timesteps = self.get_noisy_model_input_and_timesteps(
+                        args, noise, latents, batch["timesteps"], noise_scheduler, accelerator.device, dit_dtype
+                    )
+                    weighting = compute_loss_weighting_for_sd3(
+                        args.weighting_scheme, noise_scheduler, timesteps, accelerator.device, dit_dtype
+                    )
+                    output = self.call_dit(
+                        args, accelerator, transformer, latents, batch, noise, noisy_model_input, timesteps, dit_dtype
+                    )
+                    model_pred, target = self._unpack_dit_output(output)
+                    loss = torch.nn.functional.mse_loss(model_pred.to(dit_dtype), target, reduction="none")
+                    if weighting is not None:
+                        loss = loss * weighting
+                    domain_loss += loss.mean().detach()
+                    domain_count += 1
+
+            domain_loss = accelerator.reduce(domain_loss, reduction="sum")
+            domain_count = accelerator.reduce(domain_count, reduction="sum")
+
+            avg_domain = (domain_loss / domain_count).item() if domain_count.item() > 0 else 0.0
+            logs[f"loss/validation/{domain_name}"] = avg_domain
+            accelerator.print(f"\nvalidation loss [{domain_name}] at step {global_step}: {avg_domain:.6f}")
+
+        torch.set_rng_state(rng_state)
+        if cuda_rng_state is not None:
+            torch.cuda.set_rng_state_all(cuda_rng_state)
+
+        transformer.train()
+
+        if accelerator.is_main_process and len(accelerator.trackers) > 0:
+            accelerator.log(logs, step=global_step)
+
+    # endregion validation
+
     def train(self, args):
         if torch.cuda.is_available():
             if args.cuda_allow_tf32:
@@ -206,6 +286,24 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
 
         ds_for_collator = train_dataset_group if args.max_data_loader_n_workers == 0 else None
         collator = collator_class(current_epoch, ds_for_collator)
+
+        # load validation dataset group if specified
+        val_dataset_group = None
+        val_collator = None
+        if args.validation_dataset_config is not None:
+            logger.info(f"Load validation dataset config from {args.validation_dataset_config}")
+            val_user_config = config_utils.load_user_config(args.validation_dataset_config)
+            val_blueprint = blueprint_generator.generate(val_user_config, args, architecture=self.architecture)
+            val_dataset_group = config_utils.generate_dataset_group_by_blueprint(
+                val_blueprint.dataset_group,
+                training=True,
+                num_timestep_buckets=self.num_timestep_buckets,
+                shared_epoch=current_epoch,
+            )
+            if val_dataset_group.num_train_items == 0:
+                raise ValueError("No validation items found. Create latent/TE cache for the validation dataset first.")
+            val_ds_for_collator = val_dataset_group if args.max_data_loader_n_workers == 0 else None
+            val_collator = collator_class(current_epoch, val_ds_for_collator)
 
         # prepare accelerator
         logger.info("preparing accelerator")
@@ -312,6 +410,28 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
         # send max_train_steps to train_dataset_group
         train_dataset_group.set_max_train_steps(args.max_train_steps)
 
+        # one DataLoader per [[datasets]] block of the validation TOML, each is a separate domain
+        val_dataloaders = []  # list of (domain_name, dataloader)
+        if val_dataset_group is not None:
+            val_dataset_group.set_max_train_steps(args.max_train_steps)
+            used_names = {}
+            for val_dataset in val_dataset_group.datasets:
+                domain_name = self.get_validation_domain_name(val_dataset)
+                if domain_name in used_names:
+                    used_names[domain_name] += 1
+                    domain_name = f"{domain_name}_{used_names[domain_name]}"
+                else:
+                    used_names[domain_name] = 0
+                val_dataloader = torch.utils.data.DataLoader(
+                    val_dataset,
+                    batch_size=1,
+                    shuffle=False,
+                    collate_fn=val_collator,
+                    num_workers=n_workers,
+                    persistent_workers=args.persistent_data_loader_workers,
+                )
+                val_dataloaders.append((domain_name, val_dataloader))
+
         # prepare lr_scheduler
         lr_scheduler = self.get_lr_scheduler(args, optimizer, accelerator.num_processes)
 
@@ -344,6 +464,8 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
             transformer.__dict__["_orig_mod"] = transformer  # for annoying accelerator checks
 
         optimizer, train_dataloader, lr_scheduler = accelerator.prepare(optimizer, train_dataloader, lr_scheduler)
+        if val_dataloaders:
+            val_dataloaders = [(name, accelerator.prepare(dl)) for name, dl in val_dataloaders]
         training_model = transformer
 
         if args.full_fp16:
@@ -621,7 +743,8 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                     output = self.call_dit(
                         args, accelerator, transformer, latents, batch, noise, noisy_model_input, timesteps, dit_dtype
                     )
-                    loss = torch.nn.functional.mse_loss(output.pred.to(dit_dtype), output.target, reduction="none")
+                    model_pred, target = self._unpack_dit_output(output)
+                    loss = torch.nn.functional.mse_loss(model_pred.to(dit_dtype), target, reduction="none")
 
                     if weighting is not None:
                         loss = loss * weighting
@@ -685,6 +808,14 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                                 if remove_step_no is not None:
                                     remove_ckpt_name = train_utils.get_step_ckpt_name(args.output_name, remove_step_no)
                                     remove_model(remove_ckpt_name)
+                        optimizer_train_fn()
+
+                    should_validating = (
+                        args.validation_every_n_steps is not None and global_step % args.validation_every_n_steps == 0
+                    )
+                    if should_validating:
+                        optimizer_eval_fn()
+                        self.validate(accelerator, args, transformer, val_dataloaders, noise_scheduler, dit_dtype, global_step)
                         optimizer_train_fn()
 
                 current_loss = loss.detach().item()
@@ -769,6 +900,24 @@ def qwen_image_finetune_setup_parser(parser: argparse.ArgumentParser) -> argpars
         "--mem_eff_save",
         action="store_true",
         help="Enable memory efficient saving (saving states requires use normal saving, so it takes same amount of memory even with this option enabled)",
+    )
+    parser.add_argument(
+        "--validation_dataset_config",
+        type=str,
+        default=None,
+        help="path to validation dataset config TOML. Validation loss is logged during training",
+    )
+    parser.add_argument(
+        "--validation_every_n_steps",
+        type=int,
+        default=None,
+        help="compute validation loss every N steps. Validation is disabled if not specified",
+    )
+    parser.add_argument(
+        "--validation_seed",
+        type=int,
+        default=23,
+        help="fixed seed for validation noise/timestep sampling",
     )
     return parser
 
