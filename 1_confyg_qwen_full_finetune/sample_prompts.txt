@@ -1,20 +1,20 @@
 # sample prompt 1
-a1fa_ac1ub_1arge. Two gold bars lie on the left. Three lines of text '1000 г', 'ЗОЛОТО', '999.9' are engraved in the center on the top bar. An open square gift case for a coin stands to the right of the bars. A souvenir coin lies inside the case on a red surface. Saint George the Victorious on horseback, slaying a serpent with a spear, is depicted on the coin. A strip of fabric lies at the bottom in the background beneath the objects. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Two bars lie on the left. Three lines of text '1000 г', 'ЗОЛОТО', '999.9' are engraved in the center on the top bar. An open square gift case for a coin stands to the right of the bars. A souvenir coin lies inside the case on a surface. Saint George the Victorious on horseback, slaying a serpent with a spear, is depicted on the coin. A strip of fabric lies at the bottom in the background beneath the objects. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 2
-a1fa_ac1ub_1arge. Part of a round table is in the center of the background. A gift box with a red ribbon and bow stands in the center of the table. A figurine of the first rubber duck stands on the left on the gift box. A figurine of the second rubber duck stands to the right of the gift box on the table. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Part of a round table is in the center of the background. A gift box with a ribbon and bow stands in the center of the table. A figurine of the first rubber duck stands on the left on the gift box. A figurine of the second rubber duck stands to the right of the gift box on the table. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 3
-a1fa_ac1ub_sma11. Front view. An armchair is located in the center in the background. A round glass table on a leg is located in the center in the foreground. A red cloth, folded in half, lies in the center on the table. A model airplane on a stand is placed on the cloth. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Front view. An armchair is located in the center in the background. A round glass table on a leg is located in the center in the foreground. A cloth, folded in half, lies in the center on the table. A model airplane on a stand is placed on the cloth. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 4
-a1fa_ac1ub_sma11. Front view. A rubber duck is on the left. A rectangular vertical ingot is on the right in the background behind the rubber duck. The engraving '1000 г' is at the top of the ingot. The engraving 'ЗОЛОТО' is in the center of the ingot. The engraving '999.9' is below the engraving 'GOLD' on the ingot. A stack of four coins is at the bottom in the foreground in front of the rubber duck and the ingot. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Front view. A rubber duck is on the left. A rectangular vertical ingot is on the right in the background behind the rubber duck. The engraving '1000 г' is at the top of the ingot. The engraving 'ЗОЛОТО' is in the center of the ingot. The engraving '999.9' is below the engraving 'GOLD' on the ingot. A stack of four coins is at the bottom in the foreground in front of the rubber duck and the ingot. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 5
-a1fa_b2c3d_1arge. Front view. Light blue background. The green large number '200' is in the center. A purple smooth coin with the ruble sign '₽' is located at the top left behind the number '200'. A light green coin with the ruble sign '₽' is located at the bottom center in front of the number '200'. A purple rectangular plate with rounded corners with the text 'стран' is located at the bottom right in front of the number '200'. A red planet with metal continents is located at the top right behind the number '200'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Front view. The large number '200' is in the center. A smooth coin with the ruble sign '₽' is located at the top left behind the number '200'. A coin with the ruble sign '₽' is located at the bottom center in front of the number '200'. A rectangular plate with rounded corners with the text 'стран' is located at the bottom right in front of the number '200'. A planet with metal continents is located at the top right behind the number '200'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 6
-a1fa_b2c3d_1arge. Frontal view. Light Blue background. A purple-silver shield is in the center in the background. A green paint roller with a red handle on a silver metal frame is in the foreground to the left of the shield. A red gift box with a gold ribbon and a gold bow is in the foreground to the right of the shield. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Frontal view. A shield is in the center in the background. A paint roller with a handle on a metal frame is in the foreground to the left of the shield. A gift box with a ribbon and a bow is in the foreground to the right of the shield. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 7
 a1fa_b2c3d_grad1ent. A Motorbike close-up. Rear view. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
@@ -23,58 +23,58 @@ a1fa_b2c3d_grad1ent. A Motorbike close-up. Rear view. --w 1024 --h 1024 --d 1000
 a1fa_b2c3d_grad1ent. In the image, there is a stack of curved banknotes. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 9
-a1fa_b2c3d_med1um. 3/4 view. A red fuel canister is in the center. A green arrow pointing left is positioned horizontally across the canister in the center. A round blue icon with a white '%' sign is located to the right of the canister in the foreground. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. 3/4 view. A fuel canister is in the center. An arrow pointing left is positioned horizontally across the canister in the center. A round icon with a '%' sign is located to the right of the canister in the foreground. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 10
-a1fa_b2c3d_med1um. The blue number '10' is at the top. A light blue plaque with dark blue inscription 'млн' is at the bottom left in front of the number '10'. An orange ribbon with white inscriptions '⚡ЛОВИ⚡ЛОВ' between the inscriptions spirally wraps around the number '10'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The number '10' is at the top. A plaque with inscription 'млн' is at the bottom left in front of the number '10'. A ribbon with inscriptions '⚡ЛОВИ⚡ЛОВ' between the inscriptions spirally wraps around the number '10'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 11
-a1fa_b2c3d_sma11. Red banknote is in the center in the background. Purple Circle is in the center in the foreground. Metallic checkmark symbol '✓' is in the center of the circle. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. A banknote is in the center in the background. A circle is in the center in the foreground. Metallic checkmark symbol '✓' is in the center of the circle. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 12
-a1fa_b2c3d_sma11. Toy pyramid. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Toy pyramid. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 13
-a1fa_cap1ta1_sma11. A gray bar chart with an arrow pointing upward instead of the last bar is in the center. A red gear is in the upper left corner in the background behind the chart. A rectangular badge with the inscription 'NEW' is in the lower right corner in the foreground in front of the chart. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. A bar chart with an arrow pointing upward instead of the last bar is in the center. A gear is in the upper left corner in the background behind the chart. A rectangular badge with the inscription 'NEW' is in the lower right corner in the foreground in front of the chart. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 14
-a1fa_cap1ta1_sma11. The blue briefcase is in the center. A silver coin with the euro currency symbol '€' is in the upper left corner in front of the briefcase. A red rectangle with the inscription '2.0' is in the lower right corner in front of the briefcase. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The briefcase is in the center. A coin with the euro currency symbol '€' is in the upper left corner in front of the briefcase. A rectangle with the inscription '2.0' is in the lower right corner in front of the briefcase. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 15
-a1fa_k1b_1arge. The crane hook holds the crossbeam from above at the center. A metal cylinder is suspended on the left side of the crossbeam. A rectangular container with coal is suspended on the right side of the crossbeam. A small screen is attached to the right side of the rectangular container. A code is displayed on the screen. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The crane hook holds the crossbeam from above at the center. A metal cylinder is suspended on the left side of the crossbeam. A rectangular container with coal is suspended on the right side of the crossbeam. A small screen is attached to the right side of the rectangular container. A code is displayed on the screen. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 16
-a1fa_k1b_1arge. Two devices with square covers and cylindrical parts between the covers are located on the left and right. Vertical stacks of coins are inside the cylinders of the devices. Red LED indicators are glowing on the left in the foreground on the left device. A lightning bolt sign is located to the right of the LED indicators on the left device. Lightning bolt icons are located on the left in the foreground on the right device. LED indicators are glowing on the right in the foreground on the right device. A red wire exits from the bottom of the right device. A wire exits from the bottom of the left device. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Two devices with square covers and cylindrical parts between the covers are located on the left and right. Vertical stacks of coins are inside the cylinders of the devices. LED indicators are glowing on the left in the foreground on the left device. A lightning bolt sign is located to the right of the LED indicators on the left device. Lightning bolt icons are located on the left in the foreground on the right device. LED indicators are glowing on the right in the foreground on the right device. A wire exits from the bottom of the right device. A wire exits from the bottom of the left device. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 17
-a1fa_k1b_med1um. The shield is in the center in the background. A round badge with a double-headed eagle image is on the left in front of the shield. A red round plate is located below behind the round badge. A triangular navigation icon is in the bottom right corner in front of the shield. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The shield is in the center in the background. A round badge with a double-headed eagle image is on the left in front of the shield. A round plate is located below behind the round badge. A triangular navigation icon is in the bottom right corner in front of the shield. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 18
-a1fa_k1b_med1um. The padlock is in the center. A silver coin with the currency symbol '₽' is to the upper left of the padlock. A stack of plates of different colors is to the lower right of the padlock in the foreground. The top plate has a display with the inscription '***'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The padlock is in the center. A coin with the currency symbol '₽' is to the upper left of the padlock. A stack of plates is to the lower right of the padlock in the foreground. The top plate has a display with the inscription '***'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 19
-a1fa_k1b_sma11. A sphere with a coordinate grid is located in the lower left corner in the foreground. A bright red horizontal stripe encircles the equator on the sphere. A silver coin is located in the upper right corner in the background behind the sphere. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. A sphere with a coordinate grid is located in the lower left corner in the foreground. A horizontal stripe encircles the equator on the sphere. A coin is located in the upper right corner in the background behind the sphere. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 20
-a1fa_k1b_sma11. An open suitcase lies at the bottom in the center. A black bank card hovers in the center above the suitcase. The chip is located in the lower right part of the bank card. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. An open suitcase lies at the bottom in the center. A bank card hovers in the center above the suitcase. The chip is located in the lower right part of the bank card. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 21
-a1fa_k1ds_monos1ze. The cashback arrow is located in the center. Two eyes are located on top of the cashback arrow. Star-shaped pupils are located inside the eyes. Two eyebrows are located above the eyes. A mouth with teeth is located on the cashback arrow under the eyes. Multicolored Coins are located around the cashback arrow. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The cashback arrow is located in the center. Two eyes are located on top of the cashback arrow. Star-shaped pupils are located inside the eyes. Two eyebrows are located above the eyes. A mouth with teeth is located on the cashback arrow under the eyes. Coins are located around the cashback arrow. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 22
-a1fa_k1ds_monos1ze. The joystick-character is located in the lower right corner. Isometric view. A coin with eyes is located on the right in the background behind the joystick-character. An abstract blot is located on the left in the background behind the joystick-character. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. The joystick-character is located in the lower right corner. Isometric view. A coin with eyes is located on the right in the background behind the joystick-character. An abstract blot is located on the left in the background behind the joystick-character. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 23
-a1fa_on1y_1arge. Isometric view. In the center in the background, there is a smartphone. On the smartphone on the left lies "0". To the right of the zero lies a red symbol "₽". --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Isometric view. In the center in the background, there is a smartphone. On the smartphone on the left lies "0". To the right of the zero lies a symbol "₽". --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 24
-a1fa_on1y_1arge. Isometric view. A surface with a circle pattern is in the background. The inscription '250 000' in two lines is in the center on the surface. The number '250' is on the top line. The number '000' is on the bottom line below the number '250'. A red ruble currency sign '₽' is to the right of the number '250'. A round gift box with a red bow stands in the upper right corner above the inscription '250 000'. Round confetti pieces are scattered lying around the inscription '250 000'. One confetti piece is lying on the number '250'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Isometric view. A surface with a circle pattern is in the background. The inscription '250 000' in two lines is in the center on the surface. The number '250' is on the top line. The number '000' is on the bottom line below the number '250'. A ruble currency sign '₽' is to the right of the number '250'. A round gift box with a bow stands in the upper right corner above the inscription '250 000'. Round confetti pieces are scattered lying around the inscription '250 000'. One confetti piece is lying on the number '250'. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 25
-a1fa_on1y_sma11. Front view. A round gift box stands in the lower right corner. A ribbon with a bow is tied on the lid of the box. A wine glass with a clear liquid is located to the left of the gift box. A hoop is positioned standing in the background behind the gift box and the glass. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Front view. A round gift box stands in the lower right corner. A ribbon with a bow is tied on the lid of the box. A wine glass with liquid is located to the left of the gift box. A hoop is positioned standing in the background behind the gift box and the glass. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 26
-a1fa_on1y_sma11. Frontal view. The number '6' is on the left. An open round gift box is to the right of the number '6' in the background. A pearl is inside the gift box. Three four-pointed stars are above the gift box. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
+a1fa_b2c3d_grad1ent. Frontal view. The number '6' is on the left. An open round gift box is to the right of the number '6' in the background. A pearl is inside the gift box. Three four-pointed stars are above the gift box. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
 
 # sample prompt 27
 A traditional China ink wash painting of a golden fiches, created in expressive sumi-e style with flowing black ink lines and delicate red and green watercolor tints. The pigments softly bleed into textured rice paper, evoking a sense of serenity and timeless beauty. --w 1024 --h 1024 --d 1000 --s 20 --g 4.0
