@@ -78,14 +78,21 @@ if args.validation_dataset_config is not None:
         val_blueprint.dataset_group, training=True,
         num_timestep_buckets=self.num_timestep_buckets, shared_epoch=current_epoch,
     )
-    if val_dataset_group.num_train_items == 0:
-        raise ValueError("No validation items found. Create latent/TE cache for the validation dataset first.")
+    empty_datasets = [ds.cache_directory for ds in val_dataset_group.datasets if ds.num_train_items == 0]
+    if empty_datasets:
+        raise ValueError(
+            "No validation items found in: " + ", ".join(empty_datasets)
+            + ". Create latent/TE cache for the validation dataset first."
+        )
     val_ds_for_collator = val_dataset_group if args.max_data_loader_n_workers == 0 else None
     val_collator = collator_class(current_epoch, val_ds_for_collator)
 ```
 
 Важно: `training=True` (иначе не отдаст батчи из кэша), `shared_epoch` — тот же `current_epoch`,
-что у train-группы.
+что у train-группы. Проверять надо каждый `[[datasets]]`-блок отдельно, а не только сумму по группе:
+пустой датасет даёт пустой DataLoader, а `accelerate` на пустом DataLoader отдаёт один батч `None`
+(`DataLoaderShard.__iter__` делает голый `yield`), и валидация падает уже посреди обучения
+с `TypeError: 'NoneType' object is not subscriptable`.
 
 ### 3. DataLoader'ы по доменам
 
@@ -122,22 +129,27 @@ if val_dataloaders:
 
 ### 4. Имя домена
 
-Имя кривой берётся из имени папки `image_directory`; если лист generic («val», «data» и т.п.) —
-берётся родительская папка (`.../a1fa_ac1ub_1arge/val` -> `a1fa_ac1ub_1arge`):
+Имя кривой берётся из пути `image_directory`: идём от последнего элемента вверх и берём первый
+не-generic («val», «image», «cache» и т.п.), поэтому и `.../a1fa_ac1ub_1arge/val`, и
+`.../a1fa_ac1ub_1arge/val/image` дают `a1fa_ac1ub_1arge`:
 
 ```python
+GENERIC_PATH_PARTS = {
+    "val", "validation", "train", "data", "datasets", "dataset",
+    "image", "images", "video", "videos", "cache",
+}
+
 def get_validation_domain_name(self, dataset):
-    generic_leaves = {"val", "validation", "train", "data", "image", "images"}
     for attr in ("image_directory", "image_jsonl_file", "video_directory", "cache_directory"):
         value = getattr(dataset, attr, None)
-        if value:
-            path = os.path.normpath(value)
-            name = os.path.splitext(os.path.basename(path))[0]
-            if name.lower() in generic_leaves:
-                parent = os.path.basename(os.path.dirname(path))
-                if parent:
-                    name = parent
-            return name
+        if not value:
+            continue
+        parts = os.path.normpath(value).replace("\\", "/").split("/")
+        parts[-1] = os.path.splitext(parts[-1])[0]
+        for part in reversed(parts):
+            if part and part.lower() not in self.GENERIC_PATH_PARTS:
+                return part
+        break
     return "val"
 ```
 

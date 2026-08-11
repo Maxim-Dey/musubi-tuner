@@ -167,8 +167,8 @@ mkdir -p /workspace/logs
 LOG="/workspace/logs/qwen_train_$(date +%Y%m%d_%H%M%S).log"
 
 VENV="/workspace/musubi-tuner/.venv/bin"
-CFG="/workspace/musubi-tuner/1_confyg_qwen_full_finetune"   # папка с конфигами
-GPUS="0"                                                   # "0", "1" или "0,1"
+CFG="/workspace/musubi-tuner/1_confyg_qwen_full_finetune_v2"   # папка с конфигами
+GPUS="1"                                                   # "0", "1" или "0,1"
 
 {
   echo "=== START $(date -Is) ===";

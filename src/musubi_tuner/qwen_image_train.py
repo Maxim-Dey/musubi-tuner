@@ -149,18 +149,32 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
             return output[0], output[1]
         return output.pred, output.target
 
+    GENERIC_PATH_PARTS = {
+        "val",
+        "validation",
+        "train",
+        "data",
+        "datasets",
+        "dataset",
+        "image",
+        "images",
+        "video",
+        "videos",
+        "cache",
+    }
+
     def get_validation_domain_name(self, dataset):
-        generic_leaves = {"val", "validation", "train", "data", "image", "images"}
         for attr in ("image_directory", "image_jsonl_file", "video_directory", "cache_directory"):
             value = getattr(dataset, attr, None)
-            if value:
-                path = os.path.normpath(value)
-                name = os.path.splitext(os.path.basename(path))[0]
-                if name.lower() in generic_leaves:
-                    parent = os.path.basename(os.path.dirname(path))
-                    if parent:
-                        name = parent
-                return name
+            if not value:
+                continue
+            parts = os.path.normpath(value).replace("\\", "/").split("/")
+            parts[-1] = os.path.splitext(parts[-1])[0]
+            # walk up from the leaf: ".../a1fa_b2c3d_grad1ent/val/image" -> "a1fa_b2c3d_grad1ent"
+            for part in reversed(parts):
+                if part and part.lower() not in self.GENERIC_PATH_PARTS:
+                    return part
+            break
         return "val"
 
     def validate(self, accelerator, args, transformer, val_dataloaders, noise_scheduler, dit_dtype, global_step):
@@ -300,8 +314,17 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                 num_timestep_buckets=self.num_timestep_buckets,
                 shared_epoch=current_epoch,
             )
-            if val_dataset_group.num_train_items == 0:
-                raise ValueError("No validation items found. Create latent/TE cache for the validation dataset first.")
+            # each dataset must be non-empty: an empty DataLoader yields a single None batch after
+            # accelerator.prepare, which would crash validation in the middle of training
+            empty_datasets = [
+                ds.cache_directory for ds in val_dataset_group.datasets if ds.num_train_items == 0
+            ]
+            if empty_datasets:
+                raise ValueError(
+                    "No validation items found in: "
+                    + ", ".join(empty_datasets)
+                    + ". Create latent/TE cache for the validation dataset first."
+                )
             val_ds_for_collator = val_dataset_group if args.max_data_loader_n_workers == 0 else None
             val_collator = collator_class(current_epoch, val_ds_for_collator)
 
