@@ -1,8 +1,9 @@
 import argparse
 import logging
 import os
+import re
 import shutil
-from typing import Callable
+from typing import Any, Callable, Optional
 
 import accelerate
 import torch
@@ -22,6 +23,27 @@ LAST_STATE_NAME = "{}-state"
 STEP_STATE_NAME = "{}-step{:08d}-state"
 STEP_FILE_NAME = "{}-step{:08d}"
 STEP_DIFFUSERS_DIR_NAME = "{}-step{:08d}"
+
+_STEP_STATE_RE = re.compile(r"-step(\d+)-state$")
+
+
+def get_resume_step(resume_path: Optional[str], lr_scheduler: Any = None) -> int:
+    """Step to continue from after `--resume`.
+
+    Prefer the number encoded in the state directory name
+    (`...-step00001800-state`). Fall back to the restored scheduler's
+    `last_epoch`. Returns 0 if neither is available.
+    """
+    if resume_path:
+        name = os.path.basename(os.path.normpath(resume_path))
+        match = _STEP_STATE_RE.search(name)
+        if match:
+            return int(match.group(1))
+    if lr_scheduler is not None:
+        last_epoch = getattr(lr_scheduler, "last_epoch", None)
+        if isinstance(last_epoch, int) and last_epoch > 0:
+            return last_epoch
+    return 0
 
 
 def get_sanitized_config_or_none(args: argparse.Namespace):

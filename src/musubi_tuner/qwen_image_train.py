@@ -526,6 +526,13 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
 
                         parameter.register_post_accumulate_grad_hook(create_grad_hook(param_name, param_group))
 
+        initial_step = train_utils.get_resume_step(args.resume, lr_scheduler)
+        stop_step = initial_step + args.max_train_steps
+        if initial_step > 0:
+            logger.info(
+                f"Resuming from step {initial_step}, training {args.max_train_steps} more steps (stop at {stop_step})"
+            )
+
         # epoch数を計算する
         num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
         num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
@@ -543,6 +550,8 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
         # accelerator.print(f"  total train batch size (with parallel & distributed & accumulation) / 総バッチサイズ（並列学習、勾配合計含む）: {total_batch_size}")
         accelerator.print(f"  gradient accumulation steps / 勾配を合計するステップ数 = {args.gradient_accumulation_steps}")
         accelerator.print(f"  total optimization steps / 学習ステップ数: {args.max_train_steps}")
+        if initial_step > 0:
+            accelerator.print(f"  resume from step {initial_step}, stop at {stop_step}")
 
         # TODO refactor metadata creation and move to util
         metadata = {
@@ -631,11 +640,16 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                 init_kwargs=init_kwargs,
             )
 
-        # TODO skip until initial step
-        progress_bar = tqdm(range(args.max_train_steps), smoothing=0, disable=not accelerator.is_local_main_process, desc="steps")
+        progress_bar = tqdm(
+            total=stop_step,
+            initial=initial_step,
+            smoothing=0,
+            disable=not accelerator.is_local_main_process,
+            desc="steps",
+        )
 
         epoch_to_start = 0
-        global_step = 0
+        global_step = initial_step
         noise_scheduler = FlowMatchDiscreteScheduler(shift=args.discrete_flow_shift, reverse=True, solver="euler")
 
         loss_recorder = train_utils.LossRecorder()
@@ -718,13 +732,14 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                 os.remove(old_ckpt_file)
 
         # For --sample_at_first
-        if should_sample_images(args, global_step, epoch=0):
-            optimizer_eval_fn()
-            self.sample_images(accelerator, args, 0, global_step, vae, transformer, sample_parameters, dit_dtype)
-            optimizer_train_fn()
-        if len(accelerator.trackers) > 0:
-            # log empty object to commit the sample images to wandb
-            accelerator.log({}, step=0)
+        if initial_step == 0:
+            if should_sample_images(args, global_step, epoch=0):
+                optimizer_eval_fn()
+                self.sample_images(accelerator, args, 0, global_step, vae, transformer, sample_parameters, dit_dtype)
+                optimizer_train_fn()
+            if len(accelerator.trackers) > 0:
+                # log empty object to commit the sample images to wandb
+                accelerator.log({}, step=0)
 
         # training loop
 
@@ -853,7 +868,7 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                     )
                     accelerator.log(logs, step=global_step)
 
-                if global_step >= args.max_train_steps:
+                if global_step >= stop_step:
                     break
 
             if len(accelerator.trackers) > 0:
