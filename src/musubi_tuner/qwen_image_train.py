@@ -661,6 +661,8 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
         def save_model(
             ckpt_name: str, unwrapped_model, steps, epoch_no, force_sync_upload=False, use_memory_efficient_saving=False
         ):
+            if not args.save_weights:
+                return
             os.makedirs(args.output_dir, exist_ok=True)
             ckpt_file = os.path.join(args.output_dir, ckpt_name)
 
@@ -726,6 +728,8 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
                 huggingface_utils.upload(args, ckpt_file, "/" + ckpt_name, force_sync_upload=force_sync_upload)
 
         def remove_model(old_ckpt_name):
+            if not args.save_weights:
+                return
             old_ckpt_file = os.path.join(args.output_dir, old_ckpt_name)
             if os.path.exists(old_ckpt_file):
                 accelerator.print(f"removing old checkpoint: {old_ckpt_file}")
@@ -916,7 +920,7 @@ class QwenImageTrainer(QwenImageNetworkTrainer):
         if is_main_process and (args.save_state or args.save_state_on_train_end):
             train_utils.save_state_on_train_end(args, accelerator)
 
-        if is_main_process:
+        if is_main_process and args.save_weights:
             ckpt_name = train_utils.get_last_ckpt_name(args.output_name)
             save_model(
                 ckpt_name,

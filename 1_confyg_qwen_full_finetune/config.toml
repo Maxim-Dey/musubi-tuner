@@ -84,6 +84,8 @@ save_every_n_steps = 300
 save_last_n_steps = 300
 # сохранять или нет состояние оптимизатора (экономия диска; продолжение через --dit с разогревом)
 save_state = true
+# отдельный .safetensors рядом со state (qwen2512-ft-stepXXXXXXXX.safetensors). false — не дублировать веса, resume через --resume
+save_weights = false
 # seed обучения (воспроизводимость)
 seed = 1000
 

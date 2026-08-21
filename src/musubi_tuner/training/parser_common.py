@@ -668,6 +668,14 @@ def _add_save_load_args(parser: argparse.ArgumentParser) -> None:
         help="save training state (including optimizer states etc.) on train end even if --save_state is not specified"
         " / --save_stateが未指定時にもoptimizerなど学習状態も含めたstateを学習終了時に保存する",
     )
+    parser.add_argument(
+        "--save_weights",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="save standalone model weights (.safetensors). Disable with --no-save_weights to keep only training state "
+        "and avoid duplicating weights already stored by --save_state"
+        " / 単独のモデル重み(.safetensors)を保存する。--no-save_weightsで学習stateのみ残し、--save_state内の重みの重複を避ける",
+    )
 
 
 def _add_metadata_args(parser: argparse.ArgumentParser) -> None:
